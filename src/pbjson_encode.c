@@ -1,9 +1,30 @@
+/**
+ * @file pbjson_encode.c
+ * @brief JSON encoding functions for nanopb structures.
+ *
+ * This file contains functions to encode nanopb structures into JSON format.
+ * It provides functions to encode various data types and structures into JSON strings.
+ */
+
 #include <pb/json.h>
 #include <string.h>
 #include <stdio.h>
 #include <inttypes.h>
 #include <limits.h>
 
+/**
+ * @struct pbjson_ostream_s
+ * @brief Structure representing the JSON output stream.
+ *
+ * @var pbjson_ostream_s::s
+ * Pointer to the output buffer.
+ * @var pbjson_ostream_s::max_size
+ * Maximum size of the output buffer.
+ * @var pbjson_ostream_s::bytes_written
+ * Number of bytes written to the output buffer.
+ * @var pbjson_ostream_s::is_wait_first_key
+ * Flag indicating if the first key is being waited for.
+ */
 struct pbjson_ostream_s
 {
     char *s;
@@ -14,10 +35,121 @@ struct pbjson_ostream_s
 
 typedef struct pbjson_ostream_s pbjson_ostream_t;
 
-static int pbjson_encode_key(pbjson_ostream_t *stream, const pbjson_iter_t *key, const void *src_struct);
+/**
+ * @brief Copies a string from source to destination.
+ *
+ * @param dst Destination buffer.
+ * @param src Source string.
+ * @return Pointer to the end of the destination string.
+ */
+static char *strcopy(char *dst, const char *src);
+
+/**
+ * @brief Writes a character to the JSON output stream.
+ *
+ * @param stream Pointer to the JSON output stream.
+ * @param c Character to write.
+ * @return 0 on success, -1 on error.
+ */
+static int pbjson_ostream_put_char(pbjson_ostream_t *stream, char c);
+
+/**
+ * @brief Writes a key to the JSON output stream.
+ *
+ * @param stream Pointer to the JSON output stream.
+ * @param s Key string to write.
+ * @return 0 on success, -1 on error.
+ */
+static int pbjson_ostream_put_key(pbjson_ostream_t *stream, const char *s);
+
+/**
+ * @brief Writes a string value to the JSON output stream.
+ *
+ * @param stream Pointer to the JSON output stream.
+ * @param s String value to write.
+ * @return Number of bytes written on success, -1 on error.
+ */
+static int pbjson_ostream_put_string(pbjson_ostream_t *stream, const char *s);
+
+/**
+ * @brief Writes a boolean value to the JSON output stream.
+ *
+ * @param stream Pointer to the JSON output stream.
+ * @param val Boolean value to write.
+ * @return Number of bytes written on success, -1 on error.
+ */
+static int pbjson_ostream_put_bool(pbjson_ostream_t *stream, bool val);
+
+/**
+ * @brief Writes an enum value to the JSON output stream.
+ *
+ * @param stream Pointer to the JSON output stream.
+ * @param item_size Size of the enum item.
+ * @param data Pointer to the enum data.
+ * @return Number of bytes written on success, -1 on error.
+ */
+static int pbjson_ostream_put_enum(pbjson_ostream_t *stream, uint32_t item_size, const void *data);
+
+/**
+ * @brief Writes an unsigned enum value to the JSON output stream.
+ *
+ * @param stream Pointer to the JSON output stream.
+ * @param item_size Size of the unsigned enum item.
+ * @param data Pointer to the unsigned enum data.
+ * @return Number of bytes written on success, -1 on error.
+ */
+static int pbjson_ostream_put_uenum(pbjson_ostream_t *stream, uint32_t item_size, const void *data);
+
+/**
+ * @brief Encodes a dictionary (object) into the JSON output stream.
+ *
+ * @param stream Pointer to the JSON output stream.
+ * @param fields Pointer to the message descriptor.
+ * @param src_struct Pointer to the source structure.
+ * @return 0 on success, -1 on error.
+ */
 static int pbjson_encode_dict(pbjson_ostream_t *stream, const pbjson_msgdesc_t *fields, const void *src_struct);
-static int pbjson_encode_value(pbjson_ostream_t *stream, const pbjson_iter_t *key, const void *data_offset);
+
+/**
+ * @brief Encodes an array into the JSON output stream.
+ *
+ * @param stream Pointer to the JSON output stream.
+ * @param key Pointer to the key descriptor.
+ * @param count Number of elements in the array.
+ * @param src_struct Pointer to the source structure.
+ * @return 0 on success, -1 on error.
+ */
 static int pbjson_encode_array(pbjson_ostream_t *stream, const pbjson_iter_t *key, uint32_t count, const void *src_struct);
+
+/**
+ * @brief Checks if a structure has a specific key.
+ *
+ * @param key Pointer to the key descriptor.
+ * @param src_struct Pointer to the source structure.
+ * @return true if the structure has the key, false otherwise.
+ */
+static bool pbjson_struct_has_key(const pbjson_iter_t *key, const void *src_struct);
+
+/**
+ * @brief Encodes a value into the JSON output stream.
+ *
+ * @param stream Pointer to the JSON output stream.
+ * @param key Pointer to the key descriptor.
+ * @param data_offset Pointer to the data offset.
+ * @return 0 on success, -1 on error.
+ */
+static int pbjson_encode_value(pbjson_ostream_t *stream, const pbjson_iter_t *key, const void *data_offset);
+
+/**
+ * @brief Encodes a key-value pair into the JSON output stream.
+ *
+ * @param stream Pointer to the JSON output stream.
+ * @param key Pointer to the key descriptor.
+ * @param src_struct Pointer to the source structure.
+ * @return 0 on success, -1 on error.
+ */
+static int pbjson_encode_key(pbjson_ostream_t *stream, const pbjson_iter_t *key, const void *src_struct);
+
 
 static char *strcopy(char *dst, const char *src)
 {

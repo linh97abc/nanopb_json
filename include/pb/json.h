@@ -12,13 +12,13 @@ extern "C"
 #endif
 
     /**
-     * @brief Encodes a structure into a JSON string.
+     * @brief Encodes a nanopb structure into a JSON string.
      * 
      * @param s The buffer to store the JSON string.
      * @param len The length of the buffer.
      * @param fields The message descriptor for the structure.
      * @param src_struct The structure to encode.
-     * @return int Returns length of string on success, or a negative value on error.
+     * @return Number of bytes written on success, -1 on error.
      */
     int pbjson_encode(char *s, uint32_t len, const pbjson_msgdesc_t *fields, const void *src_struct);
     
