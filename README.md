@@ -34,8 +34,8 @@ void encode_example() {
     YourMessage msg = YourMessage_init_zero;
     // Populate your message fields
     char json_output[1024];
-    int result = pbjson_encode(json_output, sizeof(json_output), YourMessage_fields, &msg);
-    if (result == 0) {
+    int json_len = pbjson_encode(json_output, sizeof(json_output), YourMessage_fields, &msg);
+    if (json_len > 0) {
         printf("Encoded JSON: %s\n", json_output);
     } else {
         printf("Encoding failed with error code: %d\n", result);
