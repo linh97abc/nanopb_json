@@ -94,16 +94,16 @@ mark_as_advanced(NANOPB_JSON_INCLUDE_DIRS)
 # Find nanopb source files
 set(NANOPB_JSON_SRCS)
 set(NANOPB_JSON_HDRS)
-list(APPEND _nanopb_srcs pbjson_decode.c pbjson_encode.c)
-list(APPEND _nanopb_hdrs json.h)
+list(APPEND _nanopb_json_srcs pbjson_decode.c pbjson_encode.c)
+list(APPEND _nanopb_json_hdrs json.h)
 
-foreach(FIL ${_nanopb_srcs})
+foreach(FIL ${_nanopb_json_srcs})
   find_file(${FIL}__nano_pb_file NAMES ${FIL} PATHS ${NANOPB_JSON_SRC_ROOT_FOLDER}/src ${NANOPB_JSON_INCLUDE_DIRS} NO_CMAKE_FIND_ROOT_PATH)
   list(APPEND NANOPB_JSON_SRCS "${${FIL}__nano_pb_file}")
   mark_as_advanced(${FIL}__nano_pb_file)
 endforeach()
 
-foreach(FIL ${_nanopb_hdrs})
+foreach(FIL ${_nanopb_json_hdrs})
   find_file(${FIL}__nano_pb_file NAMES ${FIL} PATHS ${NANOPB_JSON_INCLUDE_DIRS}/pb NO_CMAKE_FIND_ROOT_PATH)
   mark_as_advanced(${FIL}__nano_pb_file)
   list(APPEND NANOPB_JSON_HDRS "${${FIL}__nano_pb_file}")
@@ -123,13 +123,13 @@ target_include_directories(nanopb_json PUBLIC ${NANOPB_JSON_INCLUDE_DIRS})
 # Find nanopb generator source dir
 find_path(NANOPBJSON_GENERATOR_SOURCE_DIR
     NAMES nanopb_generator.py
-    DOC "nanopb generator source"
+    DOC "nanopb json generator source"
     PATHS
     ${NANOPB_JSON_SRC_ROOT_FOLDER}/scripts
     NO_DEFAULT_PATH
     NO_CMAKE_FIND_ROOT_PATH
 )
-mark_as_advanced(NANOPB_GENERATOR_SOURCE_DIR)
+mark_as_advanced(NANOPBJSON_GENERATOR_SOURCE_DIR)
 
 
 
