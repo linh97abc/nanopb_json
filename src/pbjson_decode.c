@@ -68,7 +68,7 @@ static int pbjson_check_brace(const char *s)
         {
         case '{':
             buff_brace_cur_i++;
-            if (buff_brace_cur_i == sizeof(buff_brace))
+            if (buff_brace_cur_i >= sizeof(buff_brace))
             {
                 return -1;
             }
@@ -83,17 +83,13 @@ static int pbjson_check_brace(const char *s)
             else
             {
                 buff_brace_cur_i--;
-                // if (buff_brace_cur_i == 0)
-                // {
-                //     return 0;
-                // }
             }
 
             break;
 
         case '[':
             buff_brace_cur_i++;
-            if (buff_brace_cur_i == sizeof(buff_brace))
+            if (buff_brace_cur_i >= sizeof(buff_brace))
             {
                 return -1;
             }
@@ -108,10 +104,6 @@ static int pbjson_check_brace(const char *s)
             else
             {
                 buff_brace_cur_i--;
-                // if (buff_brace_cur_i == 0)
-                // {
-                //     return 0;
-                // }
             }
             break;
 
@@ -326,7 +318,13 @@ static int pbjson_get_number(pbjson_parser_t *parser, pbjson_type_t type, void *
 static int pbjson_get_enum(pbjson_parser_t *parser, const pbjson_iter_t *key, void *dst)
 {
     int32_t number;
-    pbjson_get_number(parser, PBJSON_INT32_TYPE, &number);
+    int err = pbjson_get_number(parser, PBJSON_INT32_TYPE, &number);
+
+    if (err)
+    {
+        return err;
+    }
+
     switch (key->item_size)
     {
     case 1:
@@ -350,7 +348,13 @@ static int pbjson_get_enum(pbjson_parser_t *parser, const pbjson_iter_t *key, vo
 static int pbjson_get_uenum(pbjson_parser_t *parser, const pbjson_iter_t *key, void *dst)
 {
     uint32_t number;
-    pbjson_get_number(parser, PBJSON_UINT32_TYPE, &number);
+    int err = pbjson_get_number(parser, PBJSON_UINT32_TYPE, &number);
+
+    if (err)
+    {
+        return err;
+    }
+
     switch (key->item_size)
     {
     case 1:
