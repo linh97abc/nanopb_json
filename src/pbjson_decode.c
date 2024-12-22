@@ -251,6 +251,8 @@ static int pbjson_get_string(pbjson_parser_t *parser, const pbjson_iter_t *key, 
         dst++;
         parser->s++;
     }
+
+    return 0;
 }
 
 static int pbjson_get_bool(pbjson_parser_t *parser, const pbjson_iter_t *key, bool *dst)
@@ -379,7 +381,6 @@ static int pbjson_decode_value(pbjson_parser_t *parser, const pbjson_iter_t *key
         return err;
     }
 
-    int nvar;
     switch (key->data_type)
     {
     case PBJSON_STRING_TYPE:

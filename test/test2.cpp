@@ -30,8 +30,8 @@ void test2()
 
     SubMessage2 msg = SubMessage2_init_default;
 
-    msg.x = 1.23;
-    msg.y = -12.37;
+    msg.x = 1.23f;
+    msg.y = -12;
 
     int len = pbjson_encode(s, sizeof(s), SubMessage2_fields, &msg);
 
@@ -52,9 +52,10 @@ void test3()
 
     msg.opt = TestEnum::TestEnum_Opt2;
     msg.has_msg = true;
-    msg.msg.x = 1.27;
+    msg.msg.x = 1.27f;
     msg.msg.y = -25;
-    strcpy(msg.x, "Hello");
+    
+    snprintf(msg.x, sizeof(msg.x), "Hello");
 
     int len = pbjson_encode(s, sizeof(s), SubMessage3_fields, &msg);
 
@@ -76,7 +77,7 @@ void test3_1()
     msg.opt = TestEnum::TestEnum_Opt1;
     msg.has_msg = false;
 
-    strcpy(msg.x, "AH-sd");
+    snprintf(msg.x, sizeof(msg.x), "AH-sd");
 
     int len = pbjson_encode(s, sizeof(s), SubMessage3_fields, &msg);
 
@@ -113,9 +114,9 @@ void test5()
     SubMessage5 msg = SubMessage5_init_zero;
 
     msg.s_count = 3;
-    strcpy(msg.s[0], "msg1");
-    strcpy(msg.s[1], "msg2");
-    strcpy(msg.s[2], "msg3");
+    snprintf(msg.s[0], sizeof(msg.s[0]), "msg1");
+    snprintf(msg.s[1], sizeof(msg.s[1]), "msg2");
+    snprintf(msg.s[2], sizeof(msg.s[2]), "msg3");
 
     int len = pbjson_encode(s, sizeof(s), SubMessage5_fields, &msg);
 
@@ -166,16 +167,17 @@ void test7()
 
     SubMessage2 &msg2 = msg.x;
 
-    msg2.x = 1.23;
-    msg2.y = -12.37;
+    msg2.x = 1.23f;
+    msg2.y = -12;
 
     auto &msg3 = msg.y;
 
     msg3.opt = TestEnum::TestEnum_Opt2;
     msg3.has_msg = true;
-    msg3.msg.x = 1.27;
+    msg3.msg.x = 1.27f;
     msg3.msg.y = -25;
-    strcpy(msg3.x, "Hello");
+    
+    snprintf(msg3.x, sizeof(msg3.x), "Hello");
 
     int len = pbjson_encode(s, sizeof(s), SubMessage7_fields, &msg);
 
@@ -194,7 +196,7 @@ void test_decode1()
 
     SubMessage2 msg = SubMessage2_init_default;
 
-    msg.x = 1.23;
+    msg.x = 1.23f;
     msg.y = -12;
 
     int len = pbjson_encode(s, sizeof(s), SubMessage2_fields, &msg);
@@ -221,16 +223,17 @@ void test_decode2()
 
     SubMessage2 &msg2 = msg.x;
 
-    msg2.x = 1.23;
-    msg2.y = -12.37;
+    msg2.x = 1.23f;
+    msg2.y = -12;
 
     auto &msg3 = msg.y;
 
     msg3.opt = TestEnum::TestEnum_Opt2;
     msg3.has_msg = true;
-    msg3.msg.x = 1.27;
+    msg3.msg.x = 1.27f;
     msg3.msg.y = -25;
-    strcpy(msg3.x, "Hello");
+    // strncpy(msg3.x, "Hello", sizeof(msg3.x) - 1);
+    snprintf(msg3.x, sizeof(msg3.x), "Hello");
 
     int len = pbjson_encode(s, sizeof(s), SubMessage7_fields, &msg);
 
@@ -310,9 +313,9 @@ void test_decode5()
     SubMessage5 msg = SubMessage5_init_zero;
 
     msg.s_count = 3;
-    strcpy(msg.s[0], "msg1");
-    strcpy(msg.s[1], "msg2");
-    strcpy(msg.s[2], "msg3");
+    snprintf(msg.s[0], sizeof(msg.s[0]), "msg1");
+    snprintf(msg.s[1], sizeof(msg.s[1]), "msg2");
+    snprintf(msg.s[2], sizeof(msg.s[2]), "msg3");
 
     int len = pbjson_encode(s, sizeof(s), SubMessage5_fields, &msg);
 

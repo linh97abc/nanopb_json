@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <limits.h>
 
 struct pbjson_ostream_s
 {
@@ -58,7 +59,13 @@ static int pbjson_ostream_put_key(pbjson_ostream_t *stream, const char *s)
 static int pbjson_ostream_put_string(pbjson_ostream_t *stream, const char *s)
 {
 
-    int len = strlen(s);
+    size_t temp_len = strlen(s);
+    if (temp_len > INT_MAX)
+    {
+        return -1; // or any other error handling mechanism
+    }
+    int len = (int)temp_len;
+
     len += 2;
 
     uint32_t newLen = stream->bytes_written + len;
@@ -99,39 +106,23 @@ static int pbjson_ostream_put_enum(pbjson_ostream_t *stream, uint32_t item_size,
 {
     int val;
 
-    if (sizeof(int) > sizeof(int16_t))
+    switch (item_size)
     {
-        switch (item_size)
-        {
-        case sizeof(int):
-            val = *(const unsigned *)data;
-            break;
+#if INT_MAX > INT16_MAX
+    case sizeof(int):
+        val = *(const unsigned *)data;
+        break;
+#endif
 
-        case sizeof(int16_t):
-            val = *(const int16_t *)data;
-            break;
-        case sizeof(int8_t):
-            val = *(const int8_t *)data;
-            break;
+    case sizeof(int16_t):
+        val = *(const int16_t *)data;
+        break;
+    case sizeof(int8_t):
+        val = *(const int8_t *)data;
+        break;
 
-        default:
-            return -1;
-        }
-    }
-    else
-    {
-        switch (item_size)
-        {
-        case sizeof(int16_t):
-            val = *(const int16_t *)data;
-            break;
-        case sizeof(int8_t):
-            val = *(const int8_t *)data;
-            break;
-
-        default:
-            return -1;
-        }
+    default:
+        return -1;
     }
 
     return snprintf(stream->s, stream->max_size - stream->bytes_written, "%d", val);
@@ -141,38 +132,22 @@ static int pbjson_ostream_put_uenum(pbjson_ostream_t *stream, uint32_t item_size
 {
     unsigned val;
 
-    if (sizeof(int) > sizeof(uint16_t))
+    switch (item_size)
     {
-        switch (item_size)
-        {
-        case sizeof(int):
-            val = *(const unsigned *)data;
-            break;
-        case sizeof(uint16_t):
-            val = *(const uint16_t *)data;
-            break;
-        case sizeof(uint8_t):
-            val = *(const uint8_t *)data;
-            break;
+#if UINT_MAX > INT16_MAX
+    case sizeof(int):
+        val = *(const unsigned *)data;
+        break;
+#endif
+    case sizeof(uint16_t):
+        val = *(const uint16_t *)data;
+        break;
+    case sizeof(uint8_t):
+        val = *(const uint8_t *)data;
+        break;
 
-        default:
-            return -1;
-        }
-    }
-    else
-    {
-        switch (item_size)
-        {
-        case sizeof(uint16_t):
-            val = *(const uint16_t *)data;
-            break;
-        case sizeof(uint8_t):
-            val = *(const uint8_t *)data;
-            break;
-
-        default:
-            return -1;
-        }
+    default:
+        return -1;
     }
 
     return snprintf(stream->s, stream->max_size - stream->bytes_written, "%u", val);
@@ -197,8 +172,8 @@ static int pbjson_encode_dict(pbjson_ostream_t *stream, const pbjson_msgdesc_t *
     }
 
     err = pbjson_ostream_put_char(stream, '}');
-    if (err)
-        return err;
+
+    return err;
 }
 
 static int pbjson_encode_array(pbjson_ostream_t *stream, const pbjson_iter_t *key, uint32_t count, const void *src_struct)
@@ -239,8 +214,8 @@ static int pbjson_encode_array(pbjson_ostream_t *stream, const pbjson_iter_t *ke
     }
 
     err = pbjson_ostream_put_char(stream, ']');
-    if (err)
-        return err;
+
+    return err;
 }
 
 static bool pbjson_struct_has_key(const pbjson_iter_t *key, const void *src_struct)
