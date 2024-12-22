@@ -1,16 +1,179 @@
+/**
+ * @file pbjson_decode.c
+ * @brief JSON decoder for nanopb using a custom JSON parser.
+ *
+ * This file contains functions to decode JSON strings into nanopb structures.
+ * It provides support for various JSON data types including strings, numbers,
+ * booleans, arrays, and nested objects.
+ */
+
 #include <pb/json.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
 
+/**
+ * @brief Structure representing the JSON parser state.
+ */
 typedef struct pbjson_parser_s
 {
-    const char *s;
+    const char *s; /**< Pointer to the current position in the JSON string. */
 } pbjson_parser_t;
 
+/**
+ * @brief Decode a JSON value based on its type.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @param key Pointer to the JSON key descriptor.
+ * @param dst Pointer to the destination where the decoded value will be stored.
+ * @return 0 on success, -1 on error.
+ */
 static int pbjson_decode_value(pbjson_parser_t *parser, const pbjson_iter_t *key, void *dst);
+
+/**
+ * @brief Decode a JSON object into a nanopb message.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @param fields Pointer to the descriptor of the nanopb message fields.
+ * @param dst Pointer to the destination where the decoded message will be stored.
+ * @param p_has_msg Pointer to a flag indicating if the message is present.
+ * @return 0 on success, -1 on error.
+ */
 static int pbjson_decode_dict(pbjson_parser_t *parser, const pbjson_msgdesc_t *fields, void *dst, void *p_has_msg);
+
+/**
+ * @brief Find the first non-whitespace character in the JSON string.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @return 0 on success, -1 if the end of the string is reached.
+ */
+static int pbjson_find_first_char(pbjson_parser_t *parser);
+
+/**
+ * @brief Jump to the first occurrence of a specific character in the JSON string.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @param c The character to jump to.
+ * @return 0 on success, -1 on error.
+ */
+static int pbjson_jumpto_first_char(pbjson_parser_t *parser, char c);
+
+/**
+ * @brief Check if the braces in the JSON string are balanced.
+ *
+ * @param s Pointer to the JSON string.
+ * @return 0 if balanced, -1 if unbalanced.
+ */
+static int pbjson_check_brace(const char *s);
+
+/**
+ * @brief Check if a JSON object is empty.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @param close_brace The closing brace character.
+ * @return 1 if empty, 0 if not empty, -1 on error.
+ */
+static int pbjson_check_obj_empty(pbjson_parser_t *parser, char close_brace);
+
+/**
+ * @brief Decode a JSON array.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @param key Pointer to the JSON key descriptor.
+ * @param dst Pointer to the destination where the decoded array will be stored.
+ * @return 0 on success, -1 on error.
+ */
+static int pbjson_decode_array(pbjson_parser_t *parser, const pbjson_iter_t *key, void *dst);
+
+/**
+ * @brief Get a string value from the JSON string.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @param key Pointer to the JSON key descriptor.
+ * @param dst Pointer to the destination where the string will be stored.
+ * @return 0 on success, -1 on error.
+ */
+static int pbjson_get_string(pbjson_parser_t *parser, const pbjson_iter_t *key, char *dst);
+
+/**
+ * @brief Get a boolean value from the JSON string.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @param key Pointer to the JSON key descriptor.
+ * @param dst Pointer to the destination where the boolean value will be stored.
+ * @return 0 on success, -1 on error.
+ */
+static int pbjson_get_bool(pbjson_parser_t *parser, const pbjson_iter_t *key, bool *dst);
+
+/**
+ * @brief Get a numeric value from the JSON string.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @param type The type of the numeric value.
+ * @param dst Pointer to the destination where the numeric value will be stored.
+ * @return 0 on success, -1 on error.
+ */
+static int pbjson_get_number(pbjson_parser_t *parser, pbjson_type_t type, void *dst);
+
+/**
+ * @brief Get an enum value from the JSON string.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @param key Pointer to the JSON key descriptor.
+ * @param dst Pointer to the destination where the enum value will be stored.
+ * @return 0 on success, -1 on error.
+ */
+static int pbjson_get_enum(pbjson_parser_t *parser, const pbjson_iter_t *key, void *dst);
+
+/**
+ * @brief Get an unsigned enum value from the JSON string.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @param key Pointer to the JSON key descriptor.
+ * @param dst Pointer to the destination where the unsigned enum value will be stored.
+ * @return 0 on success, -1 on error.
+ */
+static int pbjson_get_uenum(pbjson_parser_t *parser, const pbjson_iter_t *key, void *dst);
+
+/**
+ * @brief Check if the JSON key matches the expected key.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @param key The expected key.
+ * @return 0 if the key matches, -1 otherwise.
+ */
+static int pbjson_check_key(pbjson_parser_t *parser, const char *key);
+
+/**
+ * @brief Discard the current JSON value.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @return 0 on success, -1 on error.
+ */
+static int pbjson_discard_value(pbjson_parser_t *parser);
+
+/**
+ * @brief Decode a JSON key-value pair.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @param fields Pointer to the descriptor of the nanopb message fields.
+ * @param dst Pointer to the destination where the decoded value will be stored.
+ * @return 0 on success, -1 on error.
+ */
+static int pbjson_decode_key(pbjson_parser_t *parser, const pbjson_msgdesc_t *fields, void *dst);
+
+/**
+ * @brief Decode a JSON object into a nanopb message.
+ *
+ * @param parser Pointer to the JSON parser state.
+ * @param fields Pointer to the descriptor of the nanopb message fields.
+ * @param dst Pointer to the destination where the decoded message will be stored.
+ * @param p_has_msg Pointer to a flag indicating if the message is present.
+ * @return 0 on success, -1 on error.
+ */
+static int pbjson_decode_dict(pbjson_parser_t *parser, const pbjson_msgdesc_t *fields, void *dst, void *p_has_msg);
+
 
 static int pbjson_find_first_char(pbjson_parser_t *parser)
 {
