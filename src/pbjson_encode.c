@@ -33,9 +33,16 @@ static char *strcopy(char *dst, const char *src)
 
 static int pbjson_ostream_put_char(pbjson_ostream_t *stream, char c)
 {
+    if (stream->bytes_written >= stream->max_size)
+    {
+        return -1;
+    }
+
     *stream->s = c;
     stream->s++;
-    return (stream->bytes_written == stream->max_size) ? -1 : 0;
+    stream->bytes_written++;
+    return (stream->bytes_written >= stream->max_size) ? -1 : 0;
+    
 }
 
 static int pbjson_ostream_put_key(pbjson_ostream_t *stream, const char *s)
@@ -47,6 +54,12 @@ static int pbjson_ostream_put_key(pbjson_ostream_t *stream, const char *s)
         if (err)
             return err;
     }
+
+    if (stream->bytes_written >= stream->max_size)
+    {
+        return -1;
+    }
+    
 
     int len = snprintf(stream->s, stream->max_size - stream->bytes_written, "\"%s\":", s);
     if (len <= 0)
@@ -233,6 +246,11 @@ static int pbjson_encode_value(pbjson_ostream_t *stream, const pbjson_iter_t *ke
 {
     int len;
 
+    if(stream->bytes_written >= stream->max_size)
+    {
+        return -1;
+    }
+
     switch (key->data_type)
     {
     case PBJSON_STRING_TYPE:
@@ -270,6 +288,7 @@ static int pbjson_encode_value(pbjson_ostream_t *stream, const pbjson_iter_t *ke
         break;
 
     default:
+        len = -1;
         break;
     }
 
@@ -317,6 +336,11 @@ static int pbjson_encode_key(pbjson_ostream_t *stream, const pbjson_iter_t *key,
 
 int pbjson_encode(char *s, uint32_t len, const pbjson_msgdesc_t *fields, const void *src_struct)
 {
+    if (len < 3)
+    {
+        return -1;
+    }
+    
     pbjson_ostream_t stream;
     stream.s = s;
     stream.max_size = len - 1;
