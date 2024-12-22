@@ -1,0 +1,7 @@
+SubMessage1.array max_count:10
+SubMessage3.x max_size:32
+
+SubMessage5.s max_size:30
+SubMessage5.s max_count:12
+
+SubMessage6.x max_count:12

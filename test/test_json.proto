@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+enum TestEnum
+{
+    Opt1 = 0;
+    Opt2 = 2;
+}
+
+message SubMessage1
+{
+    repeated int32 array = 1;
+}
+
+message SubMessage2
+{
+    float x = 1;
+    int32 y = 2;
+}
+
+message SubMessage3
+{
+    string x = 1;
+    SubMessage2 msg = 2;
+    TestEnum opt = 3;
+}
+
+message SubMessage4
+{
+    float a = 1;
+    double b = 2;
+    int32 c = 3;
+    uint32 d = 4;
+    int64 e = 5;
+    uint64 f = 6;
+
+    sint32 g = 7;
+    sint64 h = 8;
+
+    bool j = 9;
+}
+
+message SubMessage5
+{
+    repeated string s = 1;
+}
+
+message SubMessage6
+{
+    repeated SubMessage2 x = 1;
+}
+
+message SubMessage7
+{
+    SubMessage2 x = 1;
+    SubMessage3 y = 2;
+}
